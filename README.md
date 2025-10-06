@@ -172,5 +172,5 @@ Herhangi bir sorun yaşarsanız:
 
 ## Lisans
 
-Bu proje MIT lisansı altında lisanslanmıştır.
+Bu projenin her hakkı gizlidir.
 50a55fe (Initial commit)
