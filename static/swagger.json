@@ -1,0 +1,535 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Takas Backend API",
+    "description": "İkinci el takas mobil uygulaması için REST API",
+    "version": "1.0.0",
+    "contact": {
+      "name": "Takas Backend Team",
+      "email": "info@takas.com"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8000/api/v1",
+      "description": "Development server"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    },
+    "schemas": {
+      "User": {
+        "type": "object",
+        "properties": {
+          "id": {"type": "integer"},
+          "username": {"type": "string"},
+          "email": {"type": "string"},
+          "first_name": {"type": "string"},
+          "last_name": {"type": "string"},
+          "phone": {"type": "string"},
+          "is_active": {"type": "boolean"},
+          "created_at": {"type": "string", "format": "date-time"}
+        }
+      },
+      "Product": {
+        "type": "object",
+        "properties": {
+          "id": {"type": "integer"},
+          "title": {"type": "string"},
+          "description": {"type": "string"},
+          "price": {"type": "number"},
+          "category_id": {"type": "integer"},
+          "owner_id": {"type": "integer"},
+          "condition": {"type": "string"},
+          "status": {"type": "string"},
+          "images": {"type": "array", "items": {"type": "string"}},
+          "location": {"type": "string"},
+          "created_at": {"type": "string", "format": "date-time"}
+        }
+      },
+      "Category": {
+        "type": "object",
+        "properties": {
+          "id": {"type": "integer"},
+          "name": {"type": "string"},
+          "description": {"type": "string"},
+          "parent_id": {"type": "integer"},
+          "created_at": {"type": "string", "format": "date-time"}
+        }
+      },
+      "Trade": {
+        "type": "object",
+        "properties": {
+          "id": {"type": "integer"},
+          "product_id": {"type": "integer"},
+          "user_id": {"type": "integer"},
+          "status": {"type": "string"},
+          "message": {"type": "string"},
+          "created_at": {"type": "string", "format": "date-time"}
+        }
+      },
+      "Message": {
+        "type": "object",
+        "properties": {
+          "id": {"type": "integer"},
+          "sender_id": {"type": "integer"},
+          "receiver_id": {"type": "integer"},
+          "trade_id": {"type": "integer"},
+          "content": {"type": "string"},
+          "is_read": {"type": "boolean"},
+          "created_at": {"type": "string", "format": "date-time"}
+        }
+      }
+    }
+  },
+  "paths": {
+    "/auth/register": {
+      "post": {
+        "tags": ["Authentication"],
+        "summary": "Kullanıcı kaydı",
+        "description": "Yeni kullanıcı hesabı oluşturur",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["username", "email", "password"],
+                "properties": {
+                  "username": {"type": "string", "example": "johndoe"},
+                  "email": {"type": "string", "format": "email", "example": "john@example.com"},
+                  "password": {"type": "string", "example": "password123"},
+                  "first_name": {"type": "string", "example": "John"},
+                  "last_name": {"type": "string", "example": "Doe"},
+                  "phone": {"type": "string", "example": "+905551234567"}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Kullanıcı başarıyla oluşturuldu",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {"type": "string"},
+                    "user": {"$ref": "#/components/schemas/User"}
+                  }
+                }
+              }
+            }
+          },
+          "400": {"description": "Geçersiz veri"},
+          "500": {"description": "Sunucu hatası"}
+        }
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "tags": ["Authentication"],
+        "summary": "Kullanıcı girişi",
+        "description": "Kullanıcı kimlik doğrulaması yapar ve JWT token döner",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["username", "password"],
+                "properties": {
+                  "username": {"type": "string", "example": "johndoe"},
+                  "password": {"type": "string", "example": "password123"}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Giriş başarılı",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {"type": "string"},
+                    "access_token": {"type": "string"},
+                    "refresh_token": {"type": "string"},
+                    "user": {"$ref": "#/components/schemas/User"}
+                  }
+                }
+              }
+            }
+          },
+          "401": {"description": "Geçersiz kimlik bilgileri"},
+          "500": {"description": "Sunucu hatası"}
+        }
+      }
+    },
+    "/auth/profile": {
+      "get": {
+        "tags": ["Authentication"],
+        "summary": "Kullanıcı profili",
+        "description": "Giriş yapmış kullanıcının profil bilgilerini döner",
+        "security": [{"BearerAuth": []}],
+        "responses": {
+          "200": {
+            "description": "Profil bilgileri",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "user": {"$ref": "#/components/schemas/User"}
+                  }
+                }
+              }
+            }
+          },
+          "401": {"description": "Yetkilendirme gerekli"},
+          "404": {"description": "Kullanıcı bulunamadı"}
+        }
+      }
+    },
+    "/products": {
+      "get": {
+        "tags": ["Products"],
+        "summary": "Ürünleri listele",
+        "description": "Filtreleme ve sayfalama ile ürünleri listeler",
+        "parameters": [
+          {"name": "page", "in": "query", "schema": {"type": "integer"}, "description": "Sayfa numarası"},
+          {"name": "per_page", "in": "query", "schema": {"type": "integer"}, "description": "Sayfa başına ürün sayısı"},
+          {"name": "category_id", "in": "query", "schema": {"type": "integer"}, "description": "Kategori ID'si"},
+          {"name": "search", "in": "query", "schema": {"type": "string"}, "description": "Arama terimi"}
+        ],
+        "responses": {
+          "200": {
+            "description": "Ürün listesi",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "products": {"type": "array", "items": {"$ref": "#/components/schemas/Product"}},
+                    "total": {"type": "integer"},
+                    "pages": {"type": "integer"},
+                    "current_page": {"type": "integer"}
+                  }
+                }
+              }
+            }
+          },
+          "500": {"description": "Sunucu hatası"}
+        }
+      },
+      "post": {
+        "tags": ["Products"],
+        "summary": "Yeni ürün oluştur",
+        "description": "Yeni ürün ekler",
+        "security": [{"BearerAuth": []}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["title", "category_id"],
+                "properties": {
+                  "title": {"type": "string", "example": "iPhone 12"},
+                  "description": {"type": "string", "example": "Mint condition iPhone 12"},
+                  "price": {"type": "number", "example": 5000},
+                  "category_id": {"type": "integer", "example": 1},
+                  "condition": {"type": "string", "example": "Used"},
+                  "location": {"type": "string", "example": "Istanbul"}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Ürün başarıyla oluşturuldu",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {"type": "string"},
+                    "product": {"$ref": "#/components/schemas/Product"}
+                  }
+                }
+              }
+            }
+          },
+          "400": {"description": "Geçersiz veri"},
+          "401": {"description": "Yetkilendirme gerekli"},
+          "500": {"description": "Sunucu hatası"}
+        }
+      }
+    },
+    "/products/{product_id}": {
+      "get": {
+        "tags": ["Products"],
+        "summary": "Ürün detayları",
+        "description": "Belirli bir ürünün detaylarını döner",
+        "parameters": [
+          {"name": "product_id", "in": "path", "required": true, "schema": {"type": "integer"}, "description": "Ürün ID'si"}
+        ],
+        "responses": {
+          "200": {
+            "description": "Ürün detayları",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "product": {"$ref": "#/components/schemas/Product"}
+                  }
+                }
+              }
+            }
+          },
+          "404": {"description": "Ürün bulunamadı"}
+        }
+      },
+      "put": {
+        "tags": ["Products"],
+        "summary": "Ürün güncelle",
+        "description": "Mevcut ürünü günceller",
+        "security": [{"BearerAuth": []}],
+        "parameters": [
+          {"name": "product_id", "in": "path", "required": true, "schema": {"type": "integer"}, "description": "Ürün ID'si"}
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "title": {"type": "string"},
+                  "description": {"type": "string"},
+                  "price": {"type": "number"},
+                  "category_id": {"type": "integer"},
+                  "condition": {"type": "string"},
+                  "location": {"type": "string"}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ürün başarıyla güncellendi",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {"type": "string"},
+                    "product": {"$ref": "#/components/schemas/Product"}
+                  }
+                }
+              }
+            }
+          },
+          "403": {"description": "Yetkisiz erişim"},
+          "404": {"description": "Ürün bulunamadı"}
+        }
+      },
+      "delete": {
+        "tags": ["Products"],
+        "summary": "Ürün sil",
+        "description": "Ürünü siler",
+        "security": [{"BearerAuth": []}],
+        "parameters": [
+          {"name": "product_id", "in": "path", "required": true, "schema": {"type": "integer"}, "description": "Ürün ID'si"}
+        ],
+        "responses": {
+          "200": {"description": "Ürün başarıyla silindi"},
+          "403": {"description": "Yetkisiz erişim"},
+          "404": {"description": "Ürün bulunamadı"}
+        }
+      }
+    },
+    "/categories": {
+      "get": {
+        "tags": ["Categories"],
+        "summary": "Kategorileri listele",
+        "description": "Tüm kategorileri listeler",
+        "responses": {
+          "200": {
+            "description": "Kategori listesi",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "categories": {"type": "array", "items": {"$ref": "#/components/schemas/Category"}}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/trades": {
+      "get": {
+        "tags": ["Trades"],
+        "summary": "Takas tekliflerini listele",
+        "description": "Kullanıcının takas tekliflerini listeler",
+        "security": [{"BearerAuth": []}],
+        "parameters": [
+          {"name": "page", "in": "query", "schema": {"type": "integer"}, "description": "Sayfa numarası"},
+          {"name": "per_page", "in": "query", "schema": {"type": "integer"}, "description": "Sayfa başına teklif sayısı"}
+        ],
+        "responses": {
+          "200": {
+            "description": "Takas teklifleri",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "trades": {"type": "array", "items": {"$ref": "#/components/schemas/Trade"}},
+                    "total": {"type": "integer"},
+                    "pages": {"type": "integer"},
+                    "current_page": {"type": "integer"}
+                  }
+                }
+              }
+            }
+          },
+          "401": {"description": "Yetkilendirme gerekli"}
+        }
+      },
+      "post": {
+        "tags": ["Trades"],
+        "summary": "Yeni takas teklifi oluştur",
+        "description": "Bir ürün için takas teklifi oluşturur",
+        "security": [{"BearerAuth": []}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["product_id"],
+                "properties": {
+                  "product_id": {"type": "integer", "example": 1},
+                  "message": {"type": "string", "example": "Bu ürünü takas etmek istiyorum"}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Takas teklifi başarıyla oluşturuldu",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {"type": "string"},
+                    "trade": {"$ref": "#/components/schemas/Trade"}
+                  }
+                }
+              }
+            }
+          },
+          "400": {"description": "Geçersiz veri"},
+          "401": {"description": "Yetkilendirme gerekli"}
+        }
+      }
+    },
+    "/messages": {
+      "get": {
+        "tags": ["Messages"],
+        "summary": "Mesajları listele",
+        "description": "Kullanıcının mesajlarını listeler",
+        "security": [{"BearerAuth": []}],
+        "parameters": [
+          {"name": "page", "in": "query", "schema": {"type": "integer"}, "description": "Sayfa numarası"},
+          {"name": "per_page", "in": "query", "schema": {"type": "integer"}, "description": "Sayfa başına mesaj sayısı"}
+        ],
+        "responses": {
+          "200": {
+            "description": "Mesaj listesi",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "messages": {"type": "array", "items": {"$ref": "#/components/schemas/Message"}},
+                    "total": {"type": "integer"},
+                    "pages": {"type": "integer"},
+                    "current_page": {"type": "integer"}
+                  }
+                }
+              }
+            }
+          },
+          "401": {"description": "Yetkilendirme gerekli"}
+        }
+      },
+      "post": {
+        "tags": ["Messages"],
+        "summary": "Yeni mesaj gönder",
+        "description": "Başka bir kullanıcıya mesaj gönderir",
+        "security": [{"BearerAuth": []}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["receiver_id", "content"],
+                "properties": {
+                  "receiver_id": {"type": "integer", "example": 2},
+                  "trade_id": {"type": "integer", "example": 1},
+                  "content": {"type": "string", "example": "Merhaba, ürün hakkında bilgi alabilir miyim?"}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Mesaj başarıyla gönderildi",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {"type": "string"},
+                    "message_data": {"$ref": "#/components/schemas/Message"}
+                  }
+                }
+              }
+            }
+          },
+          "400": {"description": "Geçersiz veri"},
+          "401": {"description": "Yetkilendirme gerekli"}
+        }
+      }
+    }
+  },
+  "tags": [
+    {"name": "Authentication", "description": "Kullanıcı kimlik doğrulama işlemleri"},
+    {"name": "Products", "description": "Ürün yönetimi işlemleri"},
+    {"name": "Categories", "description": "Kategori yönetimi işlemleri"},
+    {"name": "Trades", "description": "Takas teklifi işlemleri"},
+    {"name": "Messages", "description": "Mesajlaşma işlemleri"}
+  ]
+}
