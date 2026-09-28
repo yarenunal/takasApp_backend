@@ -32,11 +32,9 @@ Uygulama çalıştırıldıktan sonra Swagger UI üzerinden API endpoint'leri g�
 http://localhost:8000/swagger
 ```
 
-Swagger UI üzerinden:
+## 🎥 Video Sunum
 
-* API endpoint'lerini görüntüleme
-* Request/Response yapılarını inceleme
-* Authentication ile endpoint'leri test etme
+[TakasApp Video Sunumu](https://www.youtube.com/watch?v=Kkcq81ZbU7M)
 
 ## 🚀 Installation
 
@@ -79,10 +77,6 @@ takasApp_backend/
 ├── requirements.txt
 └── README.md
 ```
-
-🎥 Video Sunum
-
-YouTube Demo
 
 ## 👩‍💻 Developer
 
