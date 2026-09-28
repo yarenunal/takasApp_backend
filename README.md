@@ -80,6 +80,10 @@ takasApp_backend/
 └── README.md
 ```
 
+🎥 Video Sunum
+
+YouTube Demo
+
 ## 👩‍💻 Developer
 
 **Yaren Ünal**
